@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026학년도 대학수학능력시험 - 동물 영역</title>
+
+<!-- Firebase SDK (온라인 멀티기기 실시간 데이터베이스 연동) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #2b2b2b; color: #111; font-family: "Batang", "Nanum Myeongjo", "Malgun Gothic", serif; }
+button, input { font-family: inherit; }
+
+/* 앱 배경 */
+.app { min-height: 100vh; padding: 20px 10px; background: #222; display: flex; justify-content: center; }
+
+/* 수능 시험지 용지 스타일 */
+.paper {
+  width: min(920px, 96vw);
+  background: #fcfbf7;
+  border: 1px solid #999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  padding: 35px 45px;
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 수능 상단 헤더 */
+.csat-header {
+  border-top: 3px solid #000;
+  border-bottom: 3px double #000;
+  padding: 10px 0 14px;
+  text-align: center;
+  position: relative;
+}
+.csat-subhead { font-size: 13px; letter-spacing: 3px; font-weight: bold; }
+.csat-title { font-size: 28px; font-weight: 900; margin: 6px 0; letter-spacing: 5px; font-family: "Batang", serif; }
+.csat-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; font-size: 14px; font-weight: bold; }
+.csat-box-label { border: 2px solid #000; padding: 4px 12px; background: #fff; font-size: 15px; }
+
+/* 수험생 정보 입력란 */
+.info-row {
+  display: flex; gap: 20px; justify-content: flex-end; margin: 15px 0 25px;
+  font-size: 15px; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 12px;
+}
+.info-input {
+  border: none; border-bottom: 1px solid #000; background: transparent;
+  padding: 2px 8px; font-weight: bold; font-size: 15px; outline: none; width: 140px; text-align: center;
+}
+
+/* 화면 전환 시스템 */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* 안내 및 시작 화면 */
+.hero { text-align: center; padding: 20px 10px; }
+.hero h2 { font-size: 30px; margin-bottom: 12px; }
+.start-card {
+  background: #fff; border: 2px solid #000; padding: 20px;
+  max-width: 450px; margin: 0 auto 20px; text-align: left;
+  box-shadow: 4px 4px 0 #000;
+}
+.start-card label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px; }
+.start-card input { width: 100%; padding: 10px; font-size: 15px; border: 1px solid #777; margin-bottom: 12px; outline: none; }
+
+.notice-box {
+  border: 1px solid #333; background: #f4f2ea; padding: 18px;
+  max-width: 680px; margin: 20px auto; text-align: left; line-height: 1.8; font-size: 14px;
+}
+.notice-box h4 { margin: 0 0 8px; font-size: 16px; border-bottom: 1px solid #aaa; padding-bottom: 4px; }
+.btn-group { margin-top: 20px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.btn {
+  border: 2px solid #000; background: #fff; color: #000;
+  padding: 12px 28px; cursor: pointer; font-weight: bold; font-size: 15px;
+  box-shadow: 3px 3px 0 #000; transition: all 0.1s;
+}
+.btn:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #000; }
+.btn.dark { background: #000; color: #fff; }
+
+/* 수능 문제 양식 */
+.exam-bar { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 8px 15px; border: 1px solid #ccc; margin-bottom: 20px; font-size: 14px; }
+.timer { font-weight: bold; color: #c00; font-size: 16px; }
+
+.q-header { font-size: 18px; font-weight: bold; margin-bottom: 12px; line-height: 1.55; }
+.q-tag { font-size: 13px; color: #d93025; font-weight: bold; margin-left: 8px; }
+.diff-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 6px; font-weight: bold; }
+.diff-easy { background: #e6f4ea; color: #137333; border: 1px solid #ceedd5; }
+.diff-medium { background: #fef7e0; color: #b06000; border: 1px solid #fde293; }
+.diff-hard { background: #fce8e6; color: #c5221f; border: 1px solid #fad2cf; }
+
+/* <보 기> 박스 */
+.bogi-box {
+  border: 1px solid #000; background: #fff; padding: 16px 20px; margin: 15px 0 22px;
+  line-height: 1.75; font-size: 15px; position: relative;
+}
+.bogi-title { text-align: center; font-weight: bold; margin-bottom: 10px; letter-spacing: 6px; font-size: 14px; }
+
+/* 선택지 */
+.choices { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.choice-item {
+  display: flex; align-items: center; padding: 10px 14px; border: 1px solid #bbb;
+  background: #fff; cursor: pointer; transition: background 0.15s; font-size: 15px; line-height: 1.4;
+}
+.choice-item:hover { background: #f0f0e8; }
+.choice-item.selected {
+  background: #e8f0fe; border: 2px solid #000; font-weight: bold;
+}
+.num-symbol {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; margin-right: 12px; font-size: 18px; font-weight: bold; flex-shrink: 0;
+}
+.check-mark { margin-left: auto; color: #1a73e8; font-weight: bold; font-size: 18px; opacity: 0; }
+.choice-item.selected .check-mark { opacity: 1; }
+
+/* OMR 카드 */
+.omr-container { max-width: 650px; margin: 0 auto; }
+.omr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px 0; }
+.omr-row { display: flex; align-items: center; justify-content: space-between; border: 1px solid #ccc; padding: 8px 12px; background: #fff; }
+.omr-bubbles { display: flex; gap: 6px; }
+.omr-bubble {
+  width: 26px; height: 26px; border: 1px solid #666; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; background: #fff;
+}
+.omr-bubble.active { background: #000; color: #fff; border-color: #000; }
+
+/* 성적표 및 결과 */
+.report-card { border: 3px double #000; padding: 25px; background: #fff; text-align: center; margin-top: 20px; }
+.score-main { font-size: 50px; font-weight: 900; color: #000; margin: 10px 0; }
+.grade-badge { display: inline-block; padding: 8px 24px; font-size: 22px; font-weight: bold; border: 2px solid #000; background: #f8f8f8; margin-bottom: 20px; }
+.stat-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+.stat-table th, .stat-table td { border: 1px solid #000; padding: 10px; text-align: center; }
+.stat-table th { background: #eee; }
+
+/* 보호 실천 수칙 박스 */
+.action-box { border: 2px solid #2e7d32; padding: 20px; margin: 20px 0; background: #f1f8e9; text-align: left; }
+.action-box h4 { margin: 0 0 12px; text-align: center; font-size: 17px; color: #1b5e20; border-bottom: 1px dashed #a5d6a7; padding-bottom: 8px; }
+.action-list { list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 1.85; color: #2e7d32; }
+.action-list li { margin-bottom: 8px; }
+
+/* 관리자 모드 */
+.admin-badge { position: fixed; bottom: 10px; right: 10px; font-size: 12px; opacity: 0.8; cursor: pointer; color: #fff; background: #000; padding: 8px 14px; border-radius: 4px; z-index: 9999; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
+.admin-table th, .admin-table td { border: 1px solid #888; padding: 8px; text-align: center; }
+.admin-table th { background: #333; color: #fff; }
+
+@media (max-width: 600px) {
+  .paper { padding: 20px 15px; }
+  .csat-title { font-size: 20px; }
+  .omr-grid { grid-template-columns: 1fr; }
+  .info-row { flex-direction: column; gap: 8px; align-items: flex-end; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <main class="paper">
+    <header class="csat-header">
+      <div class="csat-subhead">2026학년도 대학수학능력시험 문제지</div>
+      <div class="csat-title">동물 영역</div>
+      <div class="csat-meta">
+        <span>제 1 교시</span>
+        <span class="csat-box-label">멸종위기동물 및 생태계 종합 평가</span>
+      </div>
+    </header>
+
+    <div class="info-row">
+      <div>성명 : <input type="text" id="userName" class="info-input" placeholder="이름 입력" maxlength="10"></div>
+      <div>수험 번호 : <input type="text" id="userNum" class="info-input" placeholder="숫자 6자리" maxlength="6"></div>
+    </div>
+
+    <!-- 1. 시작 안내 화면 -->
+    <section id="screen-start" class="screen active">
+      <div class="hero">
+        <h2>2026학년도 멸종위기동물능력시험</h2>
+        
+        <div class="start-card">
+          <label for="startUserName">수험생 성명:</label>
+          <input type="text" id="startUserName" placeholder="이름을 입력하세요 (예: 홍길동)">
+          
+          <label for="startUserNum">수험 번호 (6자리):</label>
+          <input type="text" id="startUserNum" placeholder="예: 123456" maxlength="6">
+        </div>
+
+        <div class="notice-box">
+          <h4>[시험 구성 및 배점 안내]</h4>
+          • 총 문항 수: <b>20문항</b> (100점 만점)<br>
+          • <b>쉬움 (1번~10번)</b>: 문항당 <b>3점</b> (총 30점)<br>
+          • <b>중간 (11번~16번)</b>: 문항당 <b>5점</b> (총 30점)<br>
+          • <b>어려움 (17번~20번)</b>: 문항당 <b>10점</b> (총 40점)<br>
+          • 문항당 제한시간: <b>35초</b>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn dark" onclick="startExam()">시험 시작 (문제지 열기)</button>
+          <button class="btn" onclick="accessAdmin()">🔑 관리자 모드</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 문제 풀이 화면 -->
+    <section id="screen-exam" class="screen">
+      <div class="exam-bar">
+        <span id="examProgress">문항 1 / 20</span>
+        <span class="timer" id="timerDisplay">⏱️ 남은 시간: 00:35</span>
+      </div>
+
+      <div id="questionContainer"></div>
+
+      <div class="btn-group" style="margin-top: 25px; justify-content: space-between;">
+        <button class="btn" onclick="prevQuestion()" id="prevBtn">이전 문제</button>
+        <button class="btn dark" onclick="nextQuestion()" id="nextBtn">다음 문제</button>
+      </div>
+    </section>
+
+    <!-- 3. OMR 화면 -->
+    <section id="screen-omr" class="screen">
+      <div class="hero" style="padding: 10px 0;">
+        <h2>📝 답안지 (OMR) 최종 확인</h2>
+        <p>선택한 답안을 확인하고 최종 제출하십시오.</p>
+      </div>
+
+      <div class="omr-container">
+        <div class="omr-grid" id="omrGrid"></div>
+        <div class="btn-group">
+          <button class="btn" onclick="goScreen('screen-exam')">← 문제지로 돌아가기</button>
+          <button class="btn dark" onclick="submitExam()">최종 답안 제출하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 성적표 및 실천 수칙 화면 -->
+    <section id="screen-result" class="screen">
+      <div class="report-card">
+        <div style="font-size: 13px; letter-spacing: 2px; color: #555;">2026학년도 대학수학능력시험</div>
+        <h3 style="font-size: 24px; margin: 8px 0 20px;">성 적 통 지 표 (동물 영역)</h3>
+
+        <div style="text-align: left; max-width: 400px; margin: 0 auto 15px; font-size: 15px;">
+          • 성명: <b id="resName">-</b><br>
+          • 수험번호: <b id="resNum">-</b>
+        </div>
+
+        <div class="score-main"><span id="resScore">0</span>점</div>
+        <div class="grade-badge" id="resGrade">1 등급</div>
+
+        <table class="stat-table">
+          <thead>
+            <tr>
+              <th>맞힌 문항 수</th>
+              <th>전체 순위</th>
+              <th>상위 백분위</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td id="resCorrect">0 / 20</td>
+              <td id="resRank">- 위</td>
+              <td id="resPercent">- %</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 멸종위기동물 보호를 위한 작은 실천 수칙 -->
+        <div class="action-box">
+          <h4>🌱 멸종위기동물을 지키는 5가지 작은 실천</h4>
+          <ul class="action-list">
+            <li><b>1. 일회용 플라스틱 줄이기</b>: 텀블러와 장바구니를 사용하여 해양동물의 먹이 착각 피해를 막아주세요.</li>
+            <li><b>2. 올바른 분리배출 생활화</b>: 쓰레기가 야생동물 서식지로 유입되지 않도록 깨끗이 씻어 배출합니다.</li>
+            <li><b>3. 에너지 절약으로 기후변화 늦추기</b>: 안 쓰는 전원 플러그를 뽑아 북극곰의 터전인 해빙을 지켜주세요.</li>
+            <li><b>4. 야생동물 거리 두기</b>: 야생동물에게 음식을 주지 않고, 지정된 탐방로만 이용하여 서식지를 존중합니다.</li>
+            <li><b>5. FSC 인증 및 친환경 제품 이용</b>: 무분별한 산림 파괴를 막는 친환경 종이·목재 제품을 사용하세요.</li>
+          </ul>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn dark" onclick="location.reload()">↻ 다시 응시하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 관리자 화면 (비밀번호: 2023) -->
+    <section id="screen-admin" class="screen">
+      <div class="hero" style="padding: 10px 0;">
+        <h2>🔐 관리자 실시간 성적 집계 시스템</h2>
+        <p>응시자 성적이 집계된 데이터 목록입니다.</p>
+
+        <div style="margin: 20px 0; text-align: right;">
+          <button class="btn" onclick="downloadCSV()">📊 CSV 성적 내보내기</button>
+          <button class="btn" onclick="clearRecords()" style="color: #c00;">🗑️ 전체 기록 삭제</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>순위</th>
+                <th>성명</th>
+                <th>수험번호</th>
+                <th>점수</th>
+                <th>등급</th>
+                <th>맞힌 개수</th>
+                <th>제출일시</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="btn-group" style="margin-top: 25px;">
+          <button class="btn dark" onclick="goScreen('screen-start')">메인 화면으로 돌아가기</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="admin-badge" onclick="accessAdmin()">🔒 관리자</div>
+
+<script>
+// ================================================================
+// 1. Firebase 데이터베이스 설정 (다른 기기 간 실시간 집계용)
+// ================================================================
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "YOUR_APP_ID"
+};
+
+let database = null;
+try {
+  if (typeof firebase !== 'undefined' && firebaseConfig && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    firebase.initializeApp(firebaseConfig);
+    database = firebase.database();
+  }
+} catch (e) {
+  console.log("Firebase 미연동 - 로컬 저장소 우선 동작");
+}
+
+// 20문항 구성 (쉬움 10, 중간 6, 어려움 4)
+const QUESTIONS = [
+  // --- [쉬움 10문제: 각 3점 (총 30점)] ---
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "한국의 대표적 천연기념물이자 멸종위기 야생생물 I급인 '반달가슴곰'의 가장 눈에 띄는 털 무늬 모양은?",
+    a: ["가슴의 흰색 V자 무늬", "얼굴의 점무늬", "등 뒤의 줄무늬", "꼬리의 동그라미 무늬", "배 부분의 붉은 무늬"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "호랑이, 반달가슴곰, 늑대처럼 젖을 먹여 새끼를 키우는 동물 분류군(강)은?",
+    a: ["파충류", "조류", "포유류", "양서류", "어류"],
+    c: 2
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "멸종위기에 처한 야생동물을 지정하여 인간의 포획 및 서식지 훼손을 법으로 금지하는 보호구역의 명칭은?",
+    a: ["야생생물 보호구역", "산업 발전 지구", "상업 중심 지구", "도시 개발 구역", "관광 전용 구역"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "낮에는 휴식을 취하고 해가 진 밤에 주로 활동하는 동물의 특성을 무엇이라고 하는가?",
+    a: ["주행성", "야행성", "동면성", "사계절성", "해양성"],
+    c: 1
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "바다거북이 버려진 플라스틱 비닐봉지를 먹이로 착각하여 삼키는 이유로 가장 적절한 것은?",
+    a: ["비닐봉지가 주 먹이인 해파리와 비슷하게 생겨서", "비닐봉지에서 단맛이 나서", "물고기 냄새가 강하게 나서", "산소를 공급해 주기 때문에", "체온을 유지하기 위해서"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "독수리나 매와 같은 조류가 하늘을 잘 날 수 있도록 진화한 뼈의 생태적 특징은?",
+    a: ["뼈 내부가 비어 있어 무게가 가볍다", "뼈가 매우 두껍고 무겁다", "뼈가 전혀 존재하지 않는다", "뼈에 탄산칼슘이 극도로 축적되어 있다", "뼈가 물을 흡수하도록 되어 있다"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "사막여우가 뜨거운 사막 환경에서 체온을 쉽게 조절하고 열을 배출하기 위해 발달한 몸의 특징은?",
+    a: ["몸에 비해 매우 큰 귀", "짧고 굵은 꼬리", "두꺼운 지방층", "작고 짧은 귀", "물갈퀴가 달린 발"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "남극의 추운 기후에 적응하여 날지는 못하지만 물속에서 빠르게 헤엄쳐 먹이를 잡는 대표적인 조류는?",
+    a: ["펭귄", "두루미", "독수리", "올빼미", "갈매기"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "무분별한 산림 채벌이나 도시 개발로 인해 야생동물의 보금자리가 사라지는 현상을 무엇이라 하는가?",
+    a: ["서식지 파괴 및 손실", "생태계 복원", "종의 다각화", "유전자 교류", "자연 보호"],
+    c: 0
+  },
+  {
+    level: "쉬움", diffClass: "diff-easy", pts: 3,
+    q: "멸종위기동물을 보호하고 자연 생태계를 지키기 위해 우리가 실천할 수 있는 가장 알맞은 행동은?",
+    a: ["일회용품 사용을 줄이고 야생동물 서식지 훼손하지 않기", "야생동물을 무단으로 포획하여 집에서 키우기", "산이나 들에 쓰레기를 버리기", "희귀 동물의 가죽 제품 구매하기", "야생동물 서식지에 도로 증설 요구하기"],
+    c: 0
+  },
+
+  // --- [중간 6문제: 각 5점 (총 30점)] ---
+  {
+    level: "중간", diffClass: "diff-medium", pts: 5,
+    q: "먹이사슬에서 식물(생산자)을 직접 먹고 살아가는 동물의 영양 단계 명칭은?",
+    a: ["1차 소비자", "2차 소비자", "최상위 포식자", "분해자", "무생물적 요인"],
+    c: 0
+  },
+  {
+    level: "중간", diffClass: "diff-medium", pts: 5,
+    q: "북극곰의 신체적 특성에 관한 설명 중 과학적으로 옳은 것은?",
+    a: ["피부는 검은색이고 털은 투명한 빈 공간 구조이다", "피부는 흰색이고 털은 검은색이다", "피부와 털 모두 순백색이다", "털에 멜라닌 색소가 매우 풍부하다", "피부가 붉은색이며 털은 노란색이다"],
+    c: 0
+  },
+  {
+    level: "중간", diffClass: "diff-medium", pts: 5,
+    q: "외래 생물종(예: 뉴트리아, 배스)이 토착 생태계에 들어왔을 때 우려되는 주된 문제는?",
+    a: ["천적이 없어 과다 증식하며 토착종 서식지 및 먹이사슬 교란", "토착 생물과의 협력으로 생물다양성 증가", "토착 동물의 수명을 대폭 연장", "지역 기후를 온난화시킴", "모든 토착종의 유전자를 강하게 만듦"],
+    c: 0
+  },
+  {
+    level: "중간", diffClass: "diff-medium", pts: 5,
+    q: "동물의 겨울잠(동면)에 대한 설명으로 가장 올바르지 <u>않은</u> 것은?",
+    a: ["겨울잠 동안 체온과 신진대사율이 평소보다 크게 상승한다", "먹이가 부족한 겨울철 에너지를 절약하기 위한 적응 전략이다", "체온이 낮아지고 심장 박동 수가 현저히 줄어든다", "곰, 박쥐, 개구리 등 다양한 동물이 동면을 한다", "가을 동안 미리 충분한 지방을 축적해야 한다"],
+    c: 0
+  },
+  {
+    level: "중간", diffClass: "diff-medium", pts: 5,
+    q: "도로로 인해 단절된 야생동물의 서식지를 연결하여 로드킬을 줄이고 유전자 교류를 돕는 구조물은?",
+    a: ["생태 통로(Eco-bridge)", "방음벽", "지하차도", "고속도로 요금소", "가로등 세트"],
+    c: 0
+  },
+  {
+    level: "중간", diffClass: "diff-medium", pts: 5,
+    q: "먹이사슬을 따라 상위 단계의 포식자로 갈수록 체내 유해물질(중금속, 미세플라스틱 등) 농도가 높아지는 현상은?",
+    a: ["생물 농축 (Bioconcentration)", "부영양화", "광합성", "증산 작용", "유전적 부유"],
+    c: 0
+  },
+
+  // --- [어려움 4문제: 각 10점 (총 40점)] ---
+  {
+    level: "어려움", diffClass: "diff-hard", pts: 10,
+    q: "도로 건설로 인한 서식지 파편화(Fragmentation)와 가장자리 효과(Edge Effect)에 대한 설명 중 옳은 것만을 &lt;보 기&gt;에서 고른 것은?",
+    bogi: "<div class='bogi-title'>&lt;보 기&gt;</div>ㄱ. 서식지가 분할될수록 전체 면적 대비 가장자리 면적 비율이 늘어난다.<br>ㄴ. 서식지 중심부에 거주하는 내부종(Interior species)의 개체군 형성에 유리해진다.<br>ㄷ. 생태 통로 설치는 단절된 파편 간 생물 교류 및 유전자 흐름을 촉진한다.",
+    a: ["ㄱ", "ㄴ", "ㄱ, ㄷ", "ㄴ, ㄷ", "ㄱ, ㄴ, ㄷ"],
+    c: 2
+  },
+  {
+    level: "어려움", diffClass: "diff-hard", pts: 10,
+    q: "최상위 포식자의 소멸이 생태계 전체에 미치는 영향(영양 연쇄 반응, Trophic Cascade)에 관한 설명 중 옳은 것만을 &lt;보 기&gt;에서 고른 것은?",
+    bogi: "<div class='bogi-title'>&lt;보 기&gt;</div>ㄱ. 최상위 포식자가 사라지면 대형 초식동물이 과다 증식하여 식생이 급감할 수 있다.<br>ㄴ. 포식자의 존재는 특정 초식동물의 독점을 막아 생물다양성 유지에 기여한다.<br>ㄷ. 영양 단계의 단순화는 생태계의 교란에 대한 복원력을 높여준다.",
+    a: ["ㄱ", "ㄷ", "ㄱ, ㄴ", "ㄱ, ㄷ", "ㄱ, ㄴ, ㄷ"],
+    c: 2
+  },
+  {
+    level: "어려움", diffClass: "diff-hard", pts: 10,
+    q: "멸종위기에 처한 야생동식물종의 국제거래에 관한 협약(CITES) 규정에 관한 설명 중 옳은 것만을 &lt;보 기&gt;에서 모두 고른 것은?",
+    bogi: "<div class='bogi-title'>&lt;보 기&gt;</div>ㄱ. 부속서 I 등재 종은 상업적 목적의 국제 거래가 엄격히 금지된다.<br>ㄴ. 부속서 II 등재 종은 수출국의 허가서가 있으면 제한적 국제 거래가 가능하다.<br>ㄷ. CITES 규제는 야생동물 불법 밀렵 및 밀거래의 경제적 유인을 억제한다.",
+    a: ["ㄱ", "ㄴ", "ㄱ, ㄴ", "ㄴ, ㄷ", "ㄱ, ㄴ, ㄷ"],
+    c: 4
+  },
+  {
+    level: "어려움", diffClass: "diff-hard", pts: 10,
+    q: "소수 개체군이 겪는 '병목 효과(Bottleneck effect)'와 유전적 다양성에 대한 자료이다. 옳은 설명만을 &lt;보 기&gt;에서 고른 것은?",
+    bogi: "<div class='bogi-title'>&lt;보 기&gt;</div>ㄱ. 개체군 크기가 급감하면 대립유전자 상실로 유전적 다양성이 현저히 낮아진다.<br>ㄴ. 근친교배 빈도가 높아질수록 유해 열성 형질이 발현될 위험성이 커진다.<br>ㄷ. 유전적 다양성이 낮아진 개체군은 새로운 환경 변화나 전염병 적응력이 높아진다.",
+    a: ["ㄱ", "ㄴ", "ㄱ, ㄴ", "ㄱ, ㄷ", "ㄱ, ㄴ, ㄷ"],
+    c: 2
+  }
+];
+
+const SYMBOLS = ["①", "②", "③", "④", "⑤"];
+
+let localBackupRecords = [];
+let currentQ = 0;
+let userAnswers = Array(QUESTIONS.length).fill(null);
+let currentUserName = "";
+let currentUserNum = "";
+let timerInterval = null;
+let timeLeft = 35;
+
+// 화면 전환
+function goScreen(screenId) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(screenId).classList.add("active");
+  if(screenId === "screen-admin") renderAdminTable();
+}
+
+// 시험 시작 함수 (이름/번호 미입력시 자동 수험생 생성으로 에러 완전 방지)
+function startExam() {
+  let name = document.getElementById("startUserName").value.trim() || document.getElementById("userName").value.trim();
+  let num = document.getElementById("startUserNum").value.trim() || document.getElementById("userNum").value.trim();
+
+  if(!name) name = "수험생";
+  if(!num) num = "123456";
+
+  // 입력창 동기화
+  document.getElementById("userName").value = name;
+  document.getElementById("userNum").value = num;
+  document.getElementById("startUserName").value = name;
+  document.getElementById("startUserNum").value = num;
+
+  currentUserName = name;
+  currentUserNum = num;
+  currentQ = 0;
+  userAnswers = Array(QUESTIONS.length).fill(null);
+
+  goScreen("screen-exam");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  clearInterval(timerInterval);
+  const qData = QUESTIONS[currentQ];
+  if(!qData) return;
+
+  document.getElementById("examProgress").textContent = `문항 ${currentQ + 1} / ${QUESTIONS.length}`;
+
+  let html = `
+    <div class="q-header">
+      <span class="diff-badge ${qData.diffClass}">${qData.level}</span>
+      ${currentQ + 1}. ${qData.q}
+      <span class="q-tag">[${qData.pts}점]</span>
+    </div>
+  `;
+
+  if(qData.bogi) {
+    html += `<div class="bogi-box">${qData.bogi}</div>`;
+  }
+
+  html += `<div class="choices">`;
+  qData.a.forEach((optText, idx) => {
+    const isSelected = userAnswers[currentQ] === idx;
+    html += `
+      <div class="choice-item ${isSelected ? 'selected' : ''}" onclick="selectOption(${idx})">
+        <span class="num-symbol">${SYMBOLS[idx]}</span>
+        <span>${optText}</span>
+        <span class="check-mark">✓</span>
+      </div>
+    `;
+  });
+  html += `</div>`;
+
+  document.getElementById("questionContainer").innerHTML = html;
+
+  const prevBtn = document.getElementById("prevBtn");
+  if(prevBtn) prevBtn.style.visibility = currentQ === 0 ? "hidden" : "visible";
+  
+  const nextBtn = document.getElementById("nextBtn");
+  if(nextBtn) nextBtn.textContent = (currentQ === QUESTIONS.length - 1) ? "OMR 답안지 작성" : "다음 문제";
+
+  startTimer();
+}
+
+function selectOption(optIndex) {
+  userAnswers[currentQ] = optIndex;
+  renderQuestionKeepTimer();
+}
+
+function renderQuestionKeepTimer() {
+  const items = document.querySelectorAll(".choice-item");
+  items.forEach((item, idx) => {
+    if(idx === userAnswers[currentQ]) {
+      item.classList.add("selected");
+    } else {
+      item.classList.remove("selected");
+    }
+  });
+}
+
+function startTimer() {
+  timeLeft = 35;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if(timeLeft <= 0) {
+      clearInterval(timerInterval);
+      if(currentQ < QUESTIONS.length - 1) {
+        currentQ++;
+        renderQuestion();
+      } else {
+        openOMR();
+      }
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const timerElem = document.getElementById("timerDisplay");
+  if(timerElem) timerElem.textContent = `⏱️ 남은 시간: 00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+}
+
+function prevQuestion() {
+  if(currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+function nextQuestion() {
+  if(currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    openOMR();
+  }
+}
+
+function openOMR() {
+  clearInterval(timerInterval);
+  goScreen("screen-omr");
+
+  let html = "";
+  QUESTIONS.forEach((q, idx) => {
+    const selected = userAnswers[idx];
+    html += `
+      <div class="omr-row">
+        <b>${idx + 1}번 <small style="color:#666">(${q.pts}점)</small></b>
+        <div class="omr-bubbles">
+          ${SYMBOLS.map((sym, bIdx) => `
+            <div class="omr-bubble ${selected === bIdx ? 'active' : ''}" onclick="markOMR(${idx},${bIdx})">
+              ${bIdx + 1}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("omrGrid").innerHTML = html;
+}
+
+function markOMR(qIdx, bIdx) {
+  userAnswers[qIdx] = bIdx;
+  openOMR();
+}
+
+// 답안 제출
+function submitExam() {
+  const unAnswered = userAnswers.filter(a => a === null).length;
+  if(unAnswered > 0) {
+    if(!confirm(`아직 풀지 않은 문제가 ${unAnswered}개 있습니다. 제출하시겠습니까?`)) return;
+  } else {
+    if(!confirm("답안을 제출하시겠습니까?")) return;
+  }
+
+  let totalScore = 0;
+  let correctCount = 0;
+  userAnswers.forEach((ans, idx) => {
+    if(ans === QUESTIONS[idx].c) {
+      correctCount++;
+      totalScore += QUESTIONS[idx].pts;
+    }
+  });
+
+  const grade = getGrade(totalScore);
+
+  const record = {
+    id: Date.now().toString(),
+    name: currentUserName,
+    num: currentUserNum,
+    score: totalScore,
+    grade: grade,
+    correct: correctCount,
+    date: new Date().toLocaleString("ko-KR")
+  };
+
+  // 1. Firebase 전송
+  if (database) {
+    try {
+      database.ref("animal_exam_records/" + record.id).set(record);
+    } catch(e) {}
+  }
+
+  // 2. LocalStorage 저장
+  try {
+    const history = JSON.parse(localStorage.getItem("csatAnimalExamRecords") || "[]");
+    history.push(record);
+    localStorage.setItem("csatAnimalExamRecords", JSON.stringify(history));
+  } catch(e) {}
+  localBackupRecords.push(record);
+
+  showResult(record);
+}
+
+function getGrade(score) {
+  if(score >= 90) return 1;
+  if(score >= 80) return 2;
+  if(score >= 70) return 3;
+  if(score >= 60) return 4;
+  if(score >= 50) return 5;
+  if(score >= 40) return 6;
+  if(score >= 30) return 7;
+  if(score >= 20) return 8;
+  return 9;
+}
+
+function showResult(rec) {
+  goScreen("screen-result");
+
+  fetchRecordsFromAllSources((records) => {
+    const sorted = records.sort((a,b) => b.score - a.score || Number(a.id) - Number(b.id));
+    const rank = sorted.findIndex(r => r.id === rec.id) + 1 || 1;
+    const total = sorted.length || 1;
+    const percentile = ((total - rank + 1) / total * 100).toFixed(1);
+
+    document.getElementById("resName").textContent = rec.name;
+    document.getElementById("resNum").textContent = rec.num;
+    document.getElementById("resScore").textContent = rec.score;
+    document.getElementById("resGrade").textContent = `${rec.grade} 등급`;
+    document.getElementById("resCorrect").textContent = `${rec.correct} / 20`;
+    document.getElementById("resRank").textContent = `${rank}위 / ${total}명`;
+    document.getElementById("resPercent").textContent = `${percentile}%`;
+  });
+}
+
+// 관리자 접속 함수 (비밀번호: 2023)
+function accessAdmin() {
+  const password = prompt("관리자 비밀번호를 입력하세요:");
+  if(password === "2023") {
+    goScreen("screen-admin");
+  } else if(password !== null) {
+    alert("비밀번호가 일치하지 않습니다.");
+  }
+}
+
+// 안전한 통합 조회 함수 (오류 완벽 방가)
+function fetchRecordsFromAllSources(callback) {
+  if (database) {
+    try {
+      database.ref("animal_exam_records").once("value").then((snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const list = Object.values(data).filter(i => i && typeof i === 'object');
+          callback(list);
+        } else {
+          callback(getLocalRecords());
+        }
+      }).catch(() => {
+        callback(getLocalRecords());
+      });
+    } catch(e) {
+      callback(getLocalRecords());
+    }
+  } else {
+    callback(getLocalRecords());
+  }
+}
+
+function getLocalRecords() {
+  let localData = [];
+  try {
+    const raw = localStorage.getItem("csatAnimalExamRecords");
+    if (raw) localData = JSON.parse(raw);
+  } catch(e) {}
+  if (!Array.isArray(localData)) localData = [];
+
+  const combined = [...localBackupRecords, ...localData];
+  const map = new Map();
+  combined.forEach(i => {
+    if (i && i.id) map.set(String(i.id), i);
+  });
+  return Array.from(map.values());
+}
+
+function renderAdminTable() {
+  const tbody = document.getElementById("adminTableBody");
+  if(!tbody) return;
+  
+  tbody.innerHTML = `<tr><td colspan="7" style="padding:20px;">성적 데이터를 불러오는 중...</td></tr>`;
+
+  fetchRecordsFromAllSources((records) => {
+    records.sort((a,b) => b.score - a.score);
+
+    if(records.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:20px;">제출된 성적 데이터가 없습니다.</td></tr>`;
+      return;
+    }
+
+    let html = "";
+    records.forEach((r, idx) => {
+      html += `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${escapeHTML(r.name)}</td>
+          <td>${escapeHTML(r.num)}</td>
+          <td><b>${r.score}점</b></td>
+          <td>${r.grade}등급</td>
+          <td>${r.correct} / 20</td>
+          <td>${r.date}</td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  });
+}
+
+function downloadCSV() {
+  fetchRecordsFromAllSources((records) => {
+    records.sort((a,b) => b.score - a.score);
+    if(records.length === 0) {
+      alert("내보낼 성적 데이터가 없습니다.");
+      return;
+    }
+
+    let csv = "\uFEFF순위,성명,수험번호,점수,등급,맞힌개수,제출일시\n";
+    records.forEach((r, i) => {
+      csv += `${i+1},"${r.name}","${r.num}",${r.score},${r.grade},${r.correct},"${r.date}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "2026_수능_동물영역_실시간성적표.csv";
+    link.click();
+  });
+}
+
+function clearRecords() {
+  if(confirm("정말로 성적 기록을 전체 초기화하시겠습니까?")) {
+    if (database) {
+      try { database.ref("animal_exam_records").remove(); } catch(e) {}
+    }
+    try { localStorage.removeItem("csatAnimalExamRecords"); } catch(e) {}
+    localBackupRecords = [];
+    renderAdminTable();
+  }
+}
+
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[m]));
+}
+</script>
+</body>
+</html>

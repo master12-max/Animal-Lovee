@@ -323,27 +323,9 @@ button, input { font-family: inherit; }
 
 <script>
 // ================================================================
-// 1. Firebase 데이터베이스 설정 (다른 기기 간 실시간 집계용)
+// 📌 구글 스프레드시트 웹 앱 URL (여기에 아까 복사한 주소를 넣으세요)
 // ================================================================
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "YOUR_APP_ID"
-};
-
-let database = null;
-try {
-  if (typeof firebase !== 'undefined' && firebaseConfig && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    database = firebase.database();
-  }
-} catch (e) {
-  console.log("Firebase 미연동 - 로컬 저장소 우선 동작");
-}
+const SPREADSHEET_URL = "https://script.google.com/macros/s/AKfycbzkiBhWLeQSLxZHqIYWkHXv92IshID540ozCoPYGKr75Tsc787D0uxd0xV_8u6_Nw9_sA/exec ";
 
 // 20문항 구성 (쉬움 10, 중간 6, 어려움 4)
 const QUESTIONS = [
@@ -495,7 +477,7 @@ function goScreen(screenId) {
   if(screenId === "screen-admin") renderAdminTable();
 }
 
-// 시험 시작 함수 (이름/번호 미입력시 자동 수험생 생성으로 에러 완전 방지)
+// 시험 시작 함수
 function startExam() {
   let name = document.getElementById("startUserName").value.trim() || document.getElementById("userName").value.trim();
   let num = document.getElementById("startUserNum").value.trim() || document.getElementById("userNum").value.trim();
@@ -645,8 +627,8 @@ function markOMR(qIdx, bIdx) {
   openOMR();
 }
 
-// 답안 제출
-function submitExam() {
+// 답안 제출 (구글 스프레드시트 연동)
+async function submitExam() {
   const unAnswered = userAnswers.filter(a => a === null).length;
   if(unAnswered > 0) {
     if(!confirm(`아직 풀지 않은 문제가 ${unAnswered}개 있습니다. 제출하시겠습니까?`)) return;
@@ -675,14 +657,19 @@ function submitExam() {
     date: new Date().toLocaleString("ko-KR")
   };
 
-  // 1. Firebase 전송
-  if (database) {
+  // 1. 구글 스프레드시트로 전송
+  if (SPREADSHEET_URL && !SPREADSHEET_URL.includes("여기에_")) {
     try {
-      database.ref("animal_exam_records/" + record.id).set(record);
-    } catch(e) {}
+      await fetch(SPREADSHEET_URL, {
+        method: "POST",
+        body: JSON.stringify(record)
+      });
+    } catch(e) {
+      console.error("구글 스프레드시트 저장 실패:", e);
+    }
   }
 
-  // 2. LocalStorage 저장
+  // 2. LocalStorage 보조 저장
   try {
     const history = JSON.parse(localStorage.getItem("csatAnimalExamRecords") || "[]");
     history.push(record);
@@ -710,7 +697,7 @@ function showResult(rec) {
 
   fetchRecordsFromAllSources((records) => {
     const sorted = records.sort((a,b) => b.score - a.score || Number(a.id) - Number(b.id));
-    const rank = sorted.findIndex(r => r.id === rec.id) + 1 || 1;
+    const rank = sorted.findIndex(r => String(r.id) === String(rec.id)) + 1 || 1;
     const total = sorted.length || 1;
     const percentile = ((total - rank + 1) / total * 100).toFixed(1);
 
@@ -734,24 +721,22 @@ function accessAdmin() {
   }
 }
 
-// 안전한 통합 조회 함수 (오류 완벽 방가)
+// 중앙 통합 성적 조회 함수 (구글 스프레드시트 우선)
 function fetchRecordsFromAllSources(callback) {
-  if (database) {
-    try {
-      database.ref("animal_exam_records").once("value").then((snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const list = Object.values(data).filter(i => i && typeof i === 'object');
-          callback(list);
+  if (SPREADSHEET_URL && !SPREADSHEET_URL.includes("여기에_")) {
+    fetch(SPREADSHEET_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          callback(data);
         } else {
           callback(getLocalRecords());
         }
-      }).catch(() => {
+      })
+      .catch(err => {
+        console.error("스프레드시트 데이터 불러오기 실패:", err);
         callback(getLocalRecords());
       });
-    } catch(e) {
-      callback(getLocalRecords());
-    }
   } else {
     callback(getLocalRecords());
   }
@@ -828,9 +813,6 @@ function downloadCSV() {
 
 function clearRecords() {
   if(confirm("정말로 성적 기록을 전체 초기화하시겠습니까?")) {
-    if (database) {
-      try { database.ref("animal_exam_records").remove(); } catch(e) {}
-    }
     try { localStorage.removeItem("csatAnimalExamRecords"); } catch(e) {}
     localBackupRecords = [];
     renderAdminTable();
@@ -840,7 +822,7 @@ function clearRecords() {
 function escapeHTML(str) {
   return String(str).replace(/[&<>"']/g, m => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-  }[m]));
+  })[m]);
 }
 </script>
 </body>

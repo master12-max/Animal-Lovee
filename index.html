@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2026학년도 대학수학능력시험 - 동물 영역</title>
 
-<!-- Firebase SDK (온라인 멀티기기 실시간 데이터베이스 연동) -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -107,13 +107,8 @@ button, input { font-family: inherit; }
   background: #fff; cursor: pointer; transition: background 0.15s; font-size: 15px; line-height: 1.4;
 }
 .choice-item:hover { background: #f0f0e8; }
-.choice-item.selected {
-  background: #e8f0fe; border: 2px solid #000; font-weight: bold;
-}
-.num-symbol {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; margin-right: 12px; font-size: 18px; font-weight: bold; flex-shrink: 0;
-}
+.choice-item.selected { background: #e8f0fe; border: 2px solid #000; font-weight: bold; }
+.num-symbol { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-right: 12px; font-size: 18px; font-weight: bold; flex-shrink: 0; }
 .check-mark { margin-left: auto; color: #1a73e8; font-weight: bold; font-size: 18px; opacity: 0; }
 .choice-item.selected .check-mark { opacity: 1; }
 
@@ -122,13 +117,10 @@ button, input { font-family: inherit; }
 .omr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px 0; }
 .omr-row { display: flex; align-items: center; justify-content: space-between; border: 1px solid #ccc; padding: 8px 12px; background: #fff; }
 .omr-bubbles { display: flex; gap: 6px; }
-.omr-bubble {
-  width: 26px; height: 26px; border: 1px solid #666; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; background: #fff;
-}
+.omr-bubble { width: 26px; height: 26px; border: 1px solid #666; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; background: #fff; }
 .omr-bubble.active { background: #000; color: #fff; border-color: #000; }
 
-/* 성적표 및 결과 */
+/* 성적표 */
 .report-card { border: 3px double #000; padding: 25px; background: #fff; text-align: center; margin-top: 20px; }
 .score-main { font-size: 50px; font-weight: 900; color: #000; margin: 10px 0; }
 .grade-badge { display: inline-block; padding: 8px 24px; font-size: 22px; font-weight: bold; border: 2px solid #000; background: #f8f8f8; margin-bottom: 20px; }
@@ -136,11 +128,33 @@ button, input { font-family: inherit; }
 .stat-table th, .stat-table td { border: 1px solid #000; padding: 10px; text-align: center; }
 .stat-table th { background: #eee; }
 
-/* 보호 실천 수칙 박스 */
-.action-box { border: 2px solid #2e7d32; padding: 20px; margin: 20px 0; background: #f1f8e9; text-align: left; }
-.action-box h4 { margin: 0 0 12px; text-align: center; font-size: 17px; color: #1b5e20; border-bottom: 1px dashed #a5d6a7; padding-bottom: 8px; }
-.action-list { list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 1.85; color: #2e7d32; }
-.action-list li { margin-bottom: 8px; }
+/* ✉️ 7페이지 편지 북클릿 스타일 */
+.letter-book {
+  border: 2px solid #5d4037;
+  background: #fdfbf7;
+  border-radius: 8px;
+  padding: 22px;
+  margin: 25px 0;
+  box-shadow: 4px 4px 15px rgba(0,0,0,0.1);
+  text-align: left;
+  position: relative;
+}
+.letter-page { display: none; min-height: 280px; flex-direction: column; justify-content: space-between; }
+.letter-page.active { display: flex; }
+.page-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #8d6e63; padding-bottom: 8px; margin-bottom: 15px; }
+.page-title { font-size: 18px; font-weight: bold; color: #4e342e; }
+.page-num { font-size: 13px; font-weight: bold; background: #efebe9; padding: 3px 10px; border-radius: 12px; color: #6d4c41; }
+.letter-content-wrapper { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.pixel-art-box {
+  width: 130px; height: 130px; border: 2px solid #4e342e; background: #fff8e1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 60px; box-shadow: 3px 3px 0 #8d6e63; flex-shrink: 0; margin: 0 auto;
+}
+.pixel-art-box img { width: 100%; height: 100%; object-fit: contain; }
+.pixel-art-box span { font-size: 11px; color: #795548; font-weight: bold; margin-top: 4px; }
+.letter-text { flex: 1; font-size: 14px; line-height: 1.8; color: #3e2723; min-width: 240px; }
+.letter-action { background: #fff3e0; border-left: 4px solid #ff9800; padding: 10px 14px; margin-top: 14px; font-size: 13px; font-weight: bold; color: #e65100; }
+.book-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid #d7ccc8; padding-top: 12px; }
 
 /* 관리자 모드 */
 .admin-badge { position: fixed; bottom: 10px; right: 10px; font-size: 12px; opacity: 0.8; cursor: pointer; color: #fff; background: #000; padding: 8px 14px; border-radius: 4px; z-index: 9999; }
@@ -153,6 +167,7 @@ button, input { font-family: inherit; }
   .csat-title { font-size: 20px; }
   .omr-grid { grid-template-columns: 1fr; }
   .info-row { flex-direction: column; gap: 8px; align-items: flex-end; }
+  .letter-content-wrapper { flex-direction: column; text-align: center; }
 }
 </style>
 </head>
@@ -234,11 +249,11 @@ button, input { font-family: inherit; }
       </div>
     </section>
 
-    <!-- 4. 성적표 및 실천 수칙 화면 -->
+    <!-- 4. 성적표 및 7페이지 동물 편지 책자 -->
     <section id="screen-result" class="screen">
       <div class="report-card">
         <div style="font-size: 13px; letter-spacing: 2px; color: #555;">2026학년도 대학수학능력시험</div>
-        <h3 style="font-size: 24px; margin: 8px 0 20px;">성 적 통 지 표 (동물 영역)</h3>
+        <h3 style="font-size: 24px; margin: 8px 0 15px;">성 적 통 지 표 (동물 영역)</h3>
 
         <div style="text-align: left; max-width: 400px; margin: 0 auto 15px; font-size: 15px;">
           • 성명: <b id="resName">-</b><br>
@@ -265,16 +280,147 @@ button, input { font-family: inherit; }
           </tbody>
         </table>
 
-        <!-- 멸종위기동물 보호를 위한 작은 실천 수칙 -->
-        <div class="action-box">
-          <h4>🌱 멸종위기동물을 지키는 5가지 작은 실천</h4>
-          <ul class="action-list">
-            <li><b>1. 일회용 플라스틱 줄이기</b>: 텀블러와 장바구니를 사용하여 해양동물의 먹이 착각 피해를 막아주세요.</li>
-            <li><b>2. 올바른 분리배출 생활화</b>: 쓰레기가 야생동물 서식지로 유입되지 않도록 깨끗이 씻어 배출합니다.</li>
-            <li><b>3. 에너지 절약으로 기후변화 늦추기</b>: 안 쓰는 전원 플러그를 뽑아 북극곰의 터전인 해빙을 지켜주세요.</li>
-            <li><b>4. 야생동물 거리 두기</b>: 야생동물에게 음식을 주지 않고, 지정된 탐방로만 이용하여 서식지를 존중합니다.</li>
-            <li><b>5. FSC 인증 및 친환경 제품 이용</b>: 무분별한 산림 파괴를 막는 친환경 종이·목재 제품을 사용하세요.</li>
-          </ul>
+        <!-- ✉️ 7페이지 동물 편지 슬라이드 북클릿 -->
+        <div class="letter-book">
+          <!-- Page 1: 표지 -->
+          <div class="letter-page active" id="lpage-1">
+            <div class="page-header">
+              <span class="page-title">✉️ [수호 서신] 동물들의 고맙다는 편지</span>
+              <span class="page-num">1 / 7 Page</span>
+            </div>
+            <div style="text-align: center; padding: 20px 10px;">
+              <div style="font-size: 55px; margin-bottom: 10px;">💌</div>
+              <h3 style="margin: 0 0 10px; color: #4e342e;">"위험에 처한 멸종위기 동물들이 보내온 편지"</h3>
+              <p style="font-size: 14px; line-height: 1.7; color: #5d4037;">
+                시험을 치르느라 수고 많으셨습니다!<br>
+                당신이 퀴즈를 푸는 동안, 지구 곳곳에서 고통받던 5마리의 동물들이<br>
+                고마움과 간절한 마음을 담아 손편지를 보내왔습니다.<br>
+                <b>아래 [다음 페이지 ➔] 버튼을 눌러 편지를 읽어주세요.</b>
+              </p>
+            </div>
+          </div>
+
+          <!-- Page 2: 바다거북 -->
+          <div class="letter-page" id="lpage-2">
+            <div class="page-header">
+              <span class="page-title">🐢 바다거북이 보낸 편지</span>
+              <span class="page-num">2 / 7 Page</span>
+            </div>
+            <div class="letter-content-wrapper">
+              <div class="pixel-art-box">
+                🐢
+                <span>[바다거북]</span>
+              </div>
+              <div class="letter-text">
+                "안녕! 나는 넓은 태평양 바다를 헤엄치는 바다거북이야.<br>
+                바닷속에 동동 떠다니는 비닐봉지를 내가 제일 좋아하는 맛있는 해파리로 착각해서 삼켰다가 숨이 막힐 뻔했어... 텀블러와 장바구니를 써서 바다로 플라스틱이 들어오지 않게 지켜줄래?"
+                <div class="letter-action">💡 <b>실천 수칙 1</b>: 텀블러 & 장바구니 사용으로 해양 플라스틱 감축하기</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 3: 오소리 -->
+          <div class="letter-page" id="lpage-3">
+            <div class="page-header">
+              <span class="page-title">🦡 오소리가 보낸 편지</span>
+              <span class="page-num">3 / 7 Page</span>
+            </div>
+            <div class="letter-content-wrapper">
+              <div class="pixel-art-box">
+                🦡
+                <span>[한국 오소리]</span>
+              </div>
+              <div class="letter-text">
+                "안녕, 인간 친구! 나는 숲속 땅을 파며 사는 오소리야.<br>
+                사람들이 숲에 버리고 간 캔과 깨진 유리병에 발을 베여 아플 때가 정말 많아. 쓰레기를 숲에 버리지 않고, 씻어서 분리배출해 준다면 우리 보금자리가 다시 안전해질 거야."
+                <div class="letter-action">💡 <b>실천 수칙 2</b>: 올바른 분리배출로 야생 서식지 오염 예방하기</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 4: 북극곰 -->
+          <div class="letter-page" id="lpage-4">
+            <div class="page-header">
+              <span class="page-title">🧊 북극곰이 보낸 편지</span>
+              <span class="page-num">4 / 7 Page</span>
+            </div>
+            <div class="letter-content-wrapper">
+              <div class="pixel-art-box">
+                🐻‍❄️
+                <span>[북극곰]</span>
+              </div>
+              <div class="letter-text">
+                "추운 남극과 북극에서 인사할게, 나는 북극곰이야.<br>
+                지구가 점점 뜨거워지면서 우리가 사냥하고 쉬어야 할 빙하가 녹아내리고 있어... 안 쓰는 전원 플러그를 뽑고 에너지를 아껴서 우리 집이 녹지 않도록 기후변화를 늦춰줘!"
+                <div class="letter-action">💡 <b>실천 수칙 3</b>: 안 쓰는 전기 플러그 뽑기로 지구온난화 늦추기</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 5: 고라니 -->
+          <div class="letter-page" id="lpage-5">
+            <div class="page-header">
+              <span class="page-title">🦌 고라니가 보낸 편지</span>
+              <span class="page-num">5 / 7 Page</span>
+            </div>
+            <div class="letter-content-wrapper">
+              <div class="pixel-art-box">
+                🦌
+                <span>[고라니]</span>
+              </div>
+              <div class="letter-text">
+                "반가워! 나는 산길 근처에서 살고 있는 고라니라고 해.<br>
+                도로가 나면서 숲이 잘려 나가 밤마다 차도를 건너다 다칠 때가 많아. 야생동물에게 함부로 음식을 주지 않고, 지정된 탐방로로만 다니며 우리와 안전 거리를 지켜줘."
+                <div class="letter-action">💡 <b>실천 수칙 4</b>: 지정 탐방로 이용 및 야생동물 거리두기</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 6: 원앙 -->
+          <div class="letter-page" id="lpage-6">
+            <div class="page-header">
+              <span class="page-title">🪵 원앙이 보낸 편지</span>
+              <span class="page-num">6 / 7 Page</span>
+            </div>
+            <div class="letter-content-wrapper">
+              <div class="pixel-art-box">
+                🦆
+                <span>[천연기념물 원앙]</span>
+              </div>
+              <div class="letter-text">
+                "안녕! 나는 알록달록 아름다운 깃털을 가진 천연기념물 원앙이야.<br>
+                우리가 둥지를 틀고 사는 큰 고목나무들이 무분별하게 베어지면서 둥지를 잃어가고 있어. FSC 인증을 받은 친환경 종이와 목재 제품을 써서 우리 숲을 보호해 줄래?"
+                <div class="letter-action">💡 <b>실천 수칙 5</b>: FSC 인증 친환경 종이·목재 제품 소비하기</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page 7: 마무리 및 서약 -->
+          <div class="letter-page" id="lpage-7">
+            <div class="page-header">
+              <span class="page-title">🌟 [생태 수호 서약] 마무리 메시지</span>
+              <span class="page-num">7 / 7 Page</span>
+            </div>
+            <div style="text-align: center; padding: 15px 5px;">
+              <div style="font-size: 50px; margin-bottom: 8px;">🤝</div>
+              <h3 style="margin: 0 0 10px; color: #2e7d32;">"당신의 작은 관심이 동물들의 내일을 만듭니다"</h3>
+              <p style="font-size: 14px; line-height: 1.7; color: #333;">
+                동물들이 전달해 온 5가지 편지 잘 읽어보셨나요?<br>
+                오늘 배운 멸종위기동물 지식과 5가지 작은 실천 수칙을 기억한다면,<br>
+                <b>당신은 이미 훌륭한 2026 대한민국 생태 수호자입니다!</b>
+              </p>
+              <div style="margin-top: 15px; font-weight: bold; color: #1b5e20; background: #e8f5e9; padding: 10px; border-radius: 6px;">
+                🌱 지구와 모든 동물이 행복하게 함께 살아갈 수 있도록 함께해 주세요!
+              </div>
+            </div>
+          </div>
+
+          <!-- 네비게이션 버튼 -->
+          <div class="book-nav">
+            <button class="btn" onclick="moveLetterPage(-1)" id="lprevBtn">← 이전 편지</button>
+            <span id="lpageIndicator" style="font-size:13px; font-weight:bold; color:#5d4037;">1 / 7</span>
+            <button class="btn dark" onclick="moveLetterPage(1)" id="lnextBtn">다음 편지 ➔</button>
+          </div>
         </div>
 
         <div class="btn-group">
@@ -469,6 +615,7 @@ let currentUserName = "";
 let currentUserNum = "";
 let timerInterval = null;
 let timeLeft = 35;
+let currentLetterPage = 1;
 
 // 화면 전환
 function goScreen(screenId) {
@@ -485,7 +632,6 @@ function startExam() {
   if(!name) name = "수험생";
   if(!num) num = "123456";
 
-  // 입력창 동기화
   document.getElementById("userName").value = name;
   document.getElementById("userNum").value = num;
   document.getElementById("startUserName").value = name;
@@ -694,6 +840,7 @@ function getGrade(score) {
 
 function showResult(rec) {
   goScreen("screen-result");
+  updateLetterPageUI();
 
   fetchRecordsFromAllSources((records) => {
     const sorted = records.sort((a,b) => b.score - a.score || Number(a.id) - Number(b.id));
@@ -711,6 +858,28 @@ function showResult(rec) {
   });
 }
 
+// ✉️ 편지 페이지 넘기기 기능 (1~7 페이지)
+function moveLetterPage(dir) {
+  currentLetterPage += dir;
+  if(currentLetterPage < 1) currentLetterPage = 1;
+  if(currentLetterPage > 7) currentLetterPage = 7;
+  updateLetterPageUI();
+}
+
+function updateLetterPageUI() {
+  document.querySelectorAll(".letter-page").forEach((p, idx) => {
+    p.classList.toggle("active", (idx + 1) === currentLetterPage);
+  });
+
+  const prevBtn = document.getElementById("lprevBtn");
+  const nextBtn = document.getElementById("lnextBtn");
+  const indicator = document.getElementById("lpageIndicator");
+
+  if(prevBtn) prevBtn.style.visibility = (currentLetterPage === 1) ? "hidden" : "visible";
+  if(nextBtn) nextBtn.style.visibility = (currentLetterPage === 7) ? "hidden" : "visible";
+  if(indicator) indicator.textContent = `${currentLetterPage} / 7`;
+}
+
 // 관리자 접속 함수 (비밀번호: 2023)
 function accessAdmin() {
   const password = prompt("관리자 비밀번호를 입력하세요:");
@@ -721,7 +890,7 @@ function accessAdmin() {
   }
 }
 
-// 중앙 통합 성적 조회 함수 (구글 스프레드시트 우선)
+// 중앙 통합 성적 조회 함수
 function fetchRecordsFromAllSources(callback) {
   if (SPREADSHEET_URL && !SPREADSHEET_URL.includes("여기에_")) {
     fetch(SPREADSHEET_URL)
